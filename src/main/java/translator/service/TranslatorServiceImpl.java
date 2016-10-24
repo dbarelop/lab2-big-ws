@@ -3,6 +3,8 @@ package translator.service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Collection;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 import translator.domain.Language;
@@ -30,12 +32,27 @@ public class TranslatorServiceImpl implements TranslatorService {
         return response;
     }
 
+    @Override
+    public Language detectLanguage(String text, Collection<Language> hints) {
+        Future<Language> detectionResult = translator.detectLanguage(text, hints);
+        return getDetection(detectionResult);
+    }
+
     private String getTranslation(Future<String> futureResult) {
         try {
             return futureResult.get();
         } catch (Throwable e) {
             log().error("Problems getting the translation", e);
             return "Error:" + e.getMessage();
+        }
+    }
+
+    private Language getDetection(Future<Language> futureResult) {
+        try {
+            return futureResult.get();
+        } catch (InterruptedException | ExecutionException e) {
+            log().error("Problems detecting the language", e);
+            return null;
         }
     }
 }
